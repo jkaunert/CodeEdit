@@ -132,7 +132,7 @@ struct StatusBarCursorPositionLabel: View {
             // When there's a single cursor, display the line and column.
             if cursorPositions[0].start.line <= 0 || cursorPositions[0].start.column <= 0 {
                 if cursorPositions[0].range != .notFound && cursorPositions[0].range.location > 0 {
-                    return "Char: \(cursorPositions[0].range.location) Len: 0"
+                    return "Char: \(cursorPositions[0].range.location) Len: \(cursorPositions[0].range.length)"
                 }
                 return "Line: 1  Col: 1"
             }
