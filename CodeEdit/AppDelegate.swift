@@ -38,18 +38,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
 
             for index in 0..<CommandLine.arguments.count {
+#if DEBUG
+                if CommandLine.arguments[index] == "--codeedit-uitest-open-temp-workspace"
+                    && (index + 1) < CommandLine.arguments.count {
+                    let url = self.prepareUITestWorkspace(id: CommandLine.arguments[index+1])
+                    self.openWorkspace(at: url)
+                    needToHandleOpen = false
+                    continue
+                }
+#endif
+
                 if CommandLine.arguments[index] == "--open" && (index + 1) < CommandLine.arguments.count {
                     let path = CommandLine.arguments[index+1]
                     let url = URL(fileURLWithPath: path)
 
-                    CodeEditDocumentController.shared.reopenDocument(
-                        for: url,
-                        withContentsOf: url,
-                        display: true
-                    ) { document, _, _ in
-                        document?.windowControllers.first?.synchronizeWindowTitleWithDocumentName()
-                    }
-
+                    self.openWorkspace(at: url)
                     needToHandleOpen = false
                 }
             }
@@ -59,6 +62,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
         }
     }
+
+    private func openWorkspace(at url: URL) {
+        CodeEditDocumentController.shared.reopenDocument(
+            for: url,
+            withContentsOf: url,
+            display: true
+        ) { document, _, _ in
+            document?.windowControllers.first?.synchronizeWindowTitleWithDocumentName()
+        }
+    }
+
+#if DEBUG
+    private func prepareUITestWorkspace(id: String) -> URL {
+        let baseURL = FileManager.default.temporaryDirectory
+            .appending(path: "CodeEditUITests")
+        let url = baseURL.appending(path: id)
+
+        do {
+            if FileManager.default.fileExists(atPath: baseURL.path(percentEncoded: false)) {
+                try FileManager.default.removeItem(at: baseURL)
+            }
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        } catch {
+            logger.error("Failed to create UI test workspace: \(error.localizedDescription, privacy: .public)")
+        }
+
+        return url
+    }
+#endif
 
     func applicationWillTerminate(_ aNotification: Notification) {
 

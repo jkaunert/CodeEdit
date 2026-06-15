@@ -17,7 +17,11 @@ final class ProjectNavigatorFileManagementUITests: XCTestCase {
     override func setUp() async throws {
         // MainActor required for async compatibility which is required to make this method throwing
         try await MainActor.run {
-            (app, path) = try App.launchWithTempDir()
+            if name.contains("testCreateNewFiles") {
+                (app, path) = App.launchWithAppWritableTempDir()
+            } else {
+                (app, path) = try App.launchWithTempDir()
+            }
 
             window = Query.getWindow(app)
             XCTAssertTrue(window.exists, "Window not found")
@@ -81,29 +85,39 @@ final class ProjectNavigatorFileManagementUITests: XCTestCase {
     func testCreateNewFiles() throws {
         // Add a few files with the navigator button
         for idx in 0..<5 {
-            let addButton = window.popUpButtons["addButton"]
+            let previousRowCount = Query.Navigator.getRows(navigator).count
+            let addButton = Query.Navigator.getAddButton(window)
+            XCTAssertTrue(addButton.waitForExistence(timeout: 2.0), "Add button not found")
             addButton.click()
-            let addMenu = addButton.menus.firstMatch
-            addMenu.menuItems["Add File"].click()
 
-            let selectedRows = Query.Navigator.getSelectedRows(navigator)
-            guard selectedRows.firstMatch.waitForExistence(timeout: 0.5) else {
-                XCTFail("No new selected rows appeared")
+            let addFileMenuItem = addButton.menuItems["Add File"]
+            XCTAssertTrue(addFileMenuItem.waitForExistence(timeout: 2.0), "Add File menu item not found")
+            addFileMenuItem.click()
+
+            let title = idx > 0 ? "untitled\(idx)" : "untitled"
+            XCTAssertTrue(
+                Query.Navigator.waitForRowCount(navigator, greaterThan: previousRowCount, timeout: 5.0),
+                "No new navigator row appeared after adding \(title)"
+            )
+
+            guard let newFileRow = Query.Navigator.waitForProjectNavigatorRow(
+                fileTitle: title,
+                navigator,
+                timeout: 5.0
+            ) else {
+                XCTFail("\(title) did not appear in the navigator")
                 return
             }
 
-            let title = idx > 0 ? "untitled\(idx)" : "untitled"
-
-            let newFileRow = selectedRows.firstMatch
             XCTAssertEqual(newFileRow.descendants(matching: .textField).firstMatch.value as? String, title)
 
             let tabBar = Query.Window.getTabBar(window)
-            XCTAssertTrue(tabBar.exists)
-            let readmeTab = Query.TabBar.getTab(labeled: title, tabBar)
-            XCTAssertTrue(readmeTab.exists)
+            XCTAssertTrue(tabBar.waitForExistence(timeout: 2.0))
+            let newFileTab = Query.TabBar.getTab(labeled: title, tabBar)
+            XCTAssertTrue(newFileTab.waitForExistence(timeout: 2.0))
 
             let newFileEditor = Query.Window.getFirstEditor(window)
-            XCTAssertTrue(newFileEditor.exists)
+            XCTAssertTrue(newFileEditor.waitForExistence(timeout: 2.0))
             XCTAssertNotNil(newFileEditor.value as? String)
         }
     }
