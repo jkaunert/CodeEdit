@@ -80,8 +80,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let url = baseURL.appending(path: id)
 
         do {
-            if FileManager.default.fileExists(atPath: baseURL.path(percentEncoded: false)) {
-                try FileManager.default.removeItem(at: baseURL)
+            if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) {
+                try FileManager.default.removeItem(at: url)
             }
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         } catch {

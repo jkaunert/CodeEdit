@@ -57,14 +57,6 @@ enum Query {
         }
 
         static func getAddButton(_ window: XCUIElement) -> XCUIElement {
-            if window.buttons["addButton"].exists {
-                return window.buttons["addButton"]
-            }
-
-            if window.popUpButtons["addButton"].exists {
-                return window.popUpButtons["addButton"]
-            }
-
             return window.descendants(matching: .any).matching(identifier: "addButton").firstMatch
         }
 

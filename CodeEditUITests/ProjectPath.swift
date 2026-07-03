@@ -41,7 +41,28 @@ func appWritableTempProjectID() -> String {
 }
 
 func cleanUpTempProjectPaths() throws {
+    let fileManager = FileManager.default
     let baseDir = FileManager.default.temporaryDirectory.appending(path: "CodeEditUITests")
-    try FileManager.default.removeItem(at: baseDir)
-    tempProjectPathIds.removeAll()
+    var cleanupError: Error?
+    var remainingIDs = Set<String>()
+
+    for id in tempProjectPathIds {
+        let path = baseDir.appending(path: id)
+        guard fileManager.fileExists(atPath: path.path(percentEncoded: false)) else {
+            continue
+        }
+
+        do {
+            try fileManager.removeItem(at: path)
+        } catch {
+            cleanupError = cleanupError ?? error
+            remainingIDs.insert(id)
+        }
+    }
+
+    tempProjectPathIds = remainingIDs
+
+    if let cleanupError {
+        throw cleanupError
+    }
 }
