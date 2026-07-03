@@ -85,7 +85,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         } catch {
-            logger.error("Failed to create UI test workspace: \(error.localizedDescription, privacy: .public)")
+            let path = url.path(percentEncoded: false)
+            let message = "Failed to create UI test workspace at \(path): \(error.localizedDescription)"
+            logger.error("\(message, privacy: .public)")
+            fatalError(message)
         }
 
         return url

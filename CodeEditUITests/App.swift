@@ -35,7 +35,7 @@ enum App {
             tempDirID
         ]
         application.launch()
-        return (application, tempDirID)
+        return (application, appWritableTempProjectPath(id: tempDirID))
     }
 
     static func launch() -> XCUIApplication {

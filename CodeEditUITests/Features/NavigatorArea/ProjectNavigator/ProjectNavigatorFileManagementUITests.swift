@@ -30,6 +30,15 @@ final class ProjectNavigatorFileManagementUITests: XCTestCase {
             navigator = Query.Window.getProjectNavigator(window)
             XCTAssertTrue(navigator.exists, "Navigator not found")
             XCTAssertEqual(Query.Navigator.getRows(navigator).count, 1, "Found more than just the root file.")
+
+            if name.contains("testCreateNewFiles") {
+                var isDirectory: ObjCBool = false
+                XCTAssertTrue(
+                    FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+                    "App-writable temp directory was not created at \(path ?? "")"
+                )
+                XCTAssertTrue(isDirectory.boolValue, "App-writable temp project path is not a directory")
+            }
         }
     }
 
